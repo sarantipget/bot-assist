@@ -1,0 +1,103 @@
+
+import express from 'express';
+import { middleware, Client } from '@line/bot-sdk';
+
+// อ่านค่าจาก Environment Variables
+const config = {
+  channelSecret: process.env.CHANNEL_SECRET,
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+};
+
+if (!config.channelSecret || !config.channelAccessToken) {
+  console.error('❌ Missing env: CHANNEL_SECRET or CHANNEL_ACCESS_TOKEN');
+}
+
+const app = express();
+
+// health check
+app.get('/', (req, res) => res.send('LINE Bot is running'));
+
+// Webhook endpoint
+app.post(
+  '/webhook',
+  middleware({ channelSecret: config.channelSecret }),
+  async (req, res) => {
+    const client = new Client(config);
+    const events = req.body.events || [];
+
+    await Promise.all(
+      events.map(async (event) => {
+        if (event.type === 'message' && event.message?.type === 'text') {
+          const text = (event.message.text || '').trim();
+
+          // Step 1: แสดงเมนู Quick Reply
+          if (/^(เมนู|เริ่ม|ช่วยเหลือ)$/i.test(text)) {
+            return client.replyMessage(event.replyToken, [
+              {
+                type: 'text',
+                text: 'กรุณาเลือกเมนูที่ต้องการ',
+                quickReply: {
+                  items: [
+                    { type: 'action', action: { type: 'message', label: 'ดูราคา', text: 'ดูราคา' } },
+                    { type: 'action', action: { type: 'message', label: 'ติดต่อเจ้าหน้าที่', text: 'ติดต่อเจ้าหน้าที่' } },
+                    { type: 'action', action: { type: 'message', label: 'โปรโมชั่น', text: 'โปรโมชั่น' } },
+                  ],
+                },
+              },
+            ]);
+          }
+
+          // Step 2: Flex Message เมื่อเลือก "ดูราคา"
+          if (/^ดูราคา$/i.test(text)) {
+            const flexMsg = {
+              type: 'flex',
+              altText: 'ข้อมูลราคา',
+              contents: {
+                type: 'bubble',
+                header: {
+                  type: 'box',
+                  layout: 'vertical',
+                  contents: [{ type: 'text', text: 'แพ็กเกจบริการ', weight: 'bold', size: 'lg' }],
+                },
+                body: {
+                  type: 'box',
+                  layout: 'vertical',
+                  spacing: 'md',
+                  contents: [
+                    { type: 'text', text: 'Basic — ฿0', size: 'md' },
+                    { type: 'text', text: 'Pro — ฿1,780/เดือน', size: 'md' },
+                    {
+                      type: 'box',
+                      layout: 'horizontal',
+                      spacing: 'sm',
+                      contents: [
+                        { type: 'button', style: 'primary', color: '#06C755', action: { type: 'message', label: 'สมัคร Pro', text: 'สมัคร Pro' } },
+                        { type: 'button', style: 'secondary', action: { type: 'message', label: 'สอบถาม', text: 'ติดต่อเจ้าหน้าที่' } },
+                      ],
+                    },
+                  ],
+                },
+              },
+            };
+            return client.replyMessage(event.replyToken, [flexMsg]);
+          }
+
+          // ค่าอื่น ๆ: echo + แนะนำเมนู
+          return client.replyMessage(event.replyToken, [
+            { type: 'text', text: `รับข้อความ: ${text}` },
+            { type: 'text', text: 'พิมพ์คำว่า "เมนู" เพื่อเริ่มสเต็ป' },
+          ]);
+        }
+        // event อื่น ๆ handle เพิ่มได้
+        return Promise.resolve('ignored');
+      })
+    );
+
+    res.status(200).end();
+  }
+);
+
+// สำหรับรัน local (Vercel จะจัดการ port เอง ไม่ต้องใช้ตอน Deploy)
+app.listen(process.env.PORT || 3000, () =>
+  console.log('Local server started on port', process.env.PORT || 3000)
+);
