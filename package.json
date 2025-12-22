@@ -1,10 +1,10 @@
 {
   "name": "line-bot-project",
   "version": "1.0.0",
-  "type": "module",
-  "description": "LINE Messaging API bot for CI, PP, OPD, NHSO with Quick Reply & Flex Message (Vercel-ready)",
+  "description": "LINE Messaging API bot for CI, PP, OPD, NHSO with Quick Reply & Flex Message (Vercel-ready, CommonJS)",
   "dependencies": {
     "@line/bot-sdk": "^9.0.0",
     "express": "^4.19.2"
   }
 }
+``
