@@ -1,3 +1,5 @@
+// index.js (CommonJS) — พร้อมใช้กับ Vercel & รันบนเครื่อง (local)
+
 const express = require('express');
 const { middleware, Client } = require('@line/bot-sdk');
 
@@ -6,6 +8,8 @@ const config = {
   channelSecret: process.env.CHANNEL_SECRET,
   channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
 };
+
+// สร้าง LINE client
 const client = new Client(config);
 
 // --- URLs สำหรับลิงก์ตอบกลับ (ตั้งค่าเป็น Environment Variables) ---
@@ -35,17 +39,21 @@ const URLS = {
 
 const app = express();
 
-// Health check
-app.get('/', (req, res) => res.send('LINE Bot is running'));
+/* ---------- Health & Misc routes ---------- */
+app.get('/', (_req, res) => res.send('LINE Bot is running'));
 
-// Webhook (ตรวจ X-Line-Signature ด้วย middleware ของ @line/bot-sdk)
+// ลด noise จาก favicon (Vercel อาจยิงขอไฟล์นี้อัตโนมัติ)
+app.get(['/favicon.ico', '/favicon.png'], (_req, res) => res.status(204).end());
+
+/* ---------- Webhook ---------- */
+// ตรวจ X-Line-Signature ด้วย middleware ของ @line/bot-sdk
 app.post('/webhook', middleware({ channelSecret: config.channelSecret }), async (req, res) => {
   const events = req.body.events || [];
   await Promise.all(events.map(handleEvent));
   res.status(200).end();
 });
 
-// --------------------- Event Handler ---------------------
+/* ---------- Event Handler ---------- */
 async function handleEvent(event) {
   if (event.type !== 'message' || event.message?.type !== 'text') {
     return Promise.resolve('ignored');
@@ -58,13 +66,13 @@ async function handleEvent(event) {
     return replyProjectMenu(event.replyToken);
   }
 
-  // 2) เลือกโครงการ
+  // 2) เลือกโครงการ (รับทั้งชื่อเต็มและย่อ)
   if (/^(โครงการ\s*CI|CI)$/i.test(text)) return replyProjectTopics(event.replyToken, 'CI');
   if (/^(โครงการ\s*PP|PP)$/i.test(text)) return replyProjectTopics(event.replyToken, 'PP');
   if (/^(โครงการหมอดี\s*\(\s*OPD\s*\)|หมอดี\s*\(\s*OPD\s*\)|OPD)$/i.test(text)) return replyProjectTopics(event.replyToken, 'OPD');
   if (/^(โครงการหมอดี\s*\(\s*สปสช\s*\)|หมอดี\s*\(\s*สปสช\s*\)|สปสช)$/i.test(text)) return replyProjectTopics(event.replyToken, 'NHSO');
 
-  // 3) เลือกหัวข้อ เช่น "CI วิธีการทำงาน" / "PP รายการยา" / "OPD ติดต่อเจ้าหน้าที่" / "สปสช รายการยา"
+  // 3) เลือกหัวข้อแบบเจาะจง เช่น "CI วิธีการทำงาน", "PP รายการยา", "OPD ติดต่อเจ้าหน้าที่", "สปสช รายการยา"
   const m = /^(CI|PP|OPD|สปสช)\s+(วิธีการทำงาน|รายการยา|Incentive|ติดต่อเจ้าหน้าที่)$/i.exec(text);
   if (m) {
     const projKey = normalizeProjectKey(m[1]);   // CI / PP / OPD / NHSO
@@ -89,8 +97,7 @@ async function handleEvent(event) {
   ]);
 }
 
-// --------------------- Helper Functions ---------------------
-
+/* ---------- Helpers ---------- */
 // เมนูโครงการ (Quick Reply)
 function replyProjectMenu(replyToken) {
   return client.replyMessage(replyToken, [
@@ -196,7 +203,7 @@ function qItem(text) {
 function fBtn(label, url) {
   return {
     label,
-    url: url || 'https://example.com/not-configured',
+    url: url || 'https://example.com/not-configured', // กันกรณีไม่ได้ตั้งค่า
   };
 }
 
@@ -247,8 +254,9 @@ function getUrl(projKey, topicKey) {
   }
 }
 
-// ✅ อย่าฟังเซิร์ฟเวอร์บน Vercel (Serverless ทำให้เอง)
-// แต่รองรับการรัน local เพื่อทดสอบกับ ngrok
+/* ---------- Run local / Export for Vercel ---------- */
+// บน Vercel: ไม่ต้อง app.listen (Serverless ทำให้เอง)
+// บนเครื่อง: ให้รันเพื่อทดสอบกับ ngrok
 if (!process.env.VERCEL) {
   const port = process.env.PORT || 3000;
   app.listen(port, () => console.log('Local server started on port', port));
