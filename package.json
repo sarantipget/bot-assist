@@ -1,7 +1,7 @@
 {
   "name": "line-oa-vercel-webhook-bot",
   "version": "1.0.0",
-  "main": "api/index.js",
+  "main": "api/webhook.js",
   "scripts": {
     "dev": "vercel dev",
     "deploy": "vercel --prod"
