@@ -1,19 +1,17 @@
-
 # LINE OA Webhook Bot (Vercel)
-บอตตอบคำถามโครงการพิเศษ (CI, PP, MORDEE-OPD, MORDEE-CI) ด้วย Flex Message ปุ่มใหญ่
+บอตตอบคำถามโครงการ (CI, PP, MORDEE-OPD, MORDEE-CI) ด้วย Flex ปุ่มใหญ่  
+รองรับให้ลูกค้ากดปุ่มแล้ว **ส่งคีย์เวิร์ดเอง** เพื่อชน Auto Reply ของ OA
 
-## วิธีใช้งานเร็ว
-1) สร้างโปรเจกต์ Vercel, เชื่อมกับ repo นี้  
-2) ตั้ง ENV:
+## Endpoint
+- แนะนำ: `https://<project>.vercel.app/api/webhook`
+- ทางเลือก (ต้องมี vercel.json): `https://<project>.vercel.app/webhook`
+
+## Env (Vercel → Project → Settings → Environment Variables)
 - `LINE_CHANNEL_ACCESS_TOKEN`
 - `LINE_CHANNEL_SECRET`
 
-3) Deploy แล้วตั้ง LINE Webhook → `https://<your-project>.vercel.app/webhook`
-
-## โครงสร้างไฟล์
-.
-├─ api/index.js
-├─ package.json
-├─ vercel.json
-└─ README.md
+## Deploy
+```bash
+npm install
+npm run deploy
 ``
