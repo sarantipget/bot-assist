@@ -1,11 +1,19 @@
-# LINE OA Webhook Bot (Vercel)
-บอตตอบคำถามโครงการพิเศษ (CI, PP, MORDEE-OPD, MORDEE-CI) ด้วย Flex Message ปุ่มใหญ่แบบกล่องข้อความชัดเจน  
-รองรับการเปิดลิงก์และตอบข้อความตามรายการที่กำหนด
 
-## ฟีเจอร์หลัก
-- เมนูหลัก: เลือก 4 โครงการ (CI, PP, MORDEE (OPD), MORDEE (CI))
-- เมนูย่อยแต่ละโครงการ: ปุ่มใหญ่ชัดเจน (Flex Message)
-- เมนู "อื่นๆ" แยกตามโครงการ (บางอันส่ง URI, บางอันส่งข้อความ)
-- ไม่มีฐานข้อมูล ไม่ต้องจำ state — ใช้ `postback.data` คุม flow
+# LINE OA Webhook Bot (Vercel)
+บอตตอบคำถามโครงการพิเศษ (CI, PP, MORDEE-OPD, MORDEE-CI) ด้วย Flex Message ปุ่มใหญ่
+
+## วิธีใช้งานเร็ว
+1) สร้างโปรเจกต์ Vercel, เชื่อมกับ repo นี้  
+2) ตั้ง ENV:
+- `LINE_CHANNEL_ACCESS_TOKEN`
+- `LINE_CHANNEL_SECRET`
+
+3) Deploy แล้วตั้ง LINE Webhook → `https://<your-project>.vercel.app/webhook`
 
 ## โครงสร้างไฟล์
+.
+├─ api/index.js
+├─ package.json
+├─ vercel.json
+└─ README.md
+``
