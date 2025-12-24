@@ -15,6 +15,6 @@ yarn-error.log
 # Logs
 *.log
 
-# OS
+# OS junk
 .DS_Store
 Thumbs.db
