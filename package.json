@@ -1,6 +1,7 @@
 {
   "name": "line-oa-vercel-webhook-bot",
   "version": "1.0.0",
+  "description": "LINE OA webhook bot (CI, PP, MORDEE OPD/CI) using Flex Messages on Vercel; message action for Auto Reply.",
   "main": "api/webhook.js",
   "scripts": {
     "dev": "vercel dev",
