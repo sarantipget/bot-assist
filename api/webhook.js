@@ -207,3 +207,144 @@ function mordeeCiMainMenu() {
     { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F6901c8d17cc77280e8f45e5f&eko_action=open_library' } },
     { style: 'primary', action: { type: 'uri', label: '2) รายการยา', uri: 'https://cpall.ekoapp.com?redirect_path=doc%2F6901cb837cc77251f0f46a55&eko_action=open_library' } },
     { style: 'primary', action: { type: 'uri', label: '3) Username/Password/PIN', uri: 'https://docs.google.com/spreadsheets/d/1K1pYCC80TF5oUd_JLmaTNfgjpcA28j9S6r6PqJ0hEmg/edit?gid=1247026841#gid=1247026841' } },
+    { style: 'secondary', action: { type: 'postback', label: '4) อื่นๆ', data: 'project=MORDEE_CI&topic=other', displayText: 'MORDEE (CI) : อื่นๆ' } },
+    { style: 'secondary', action: { type: 'postback', label: '5) แจ้งปัญหา Help Desk', data: 'project=MORDEE_CI&topic=helpdesk', displayText: 'Help desk' } },
+    { style: 'secondary', action: { type: 'postback', label: '6) ติดต่อทีมโครงการ', data: 'project=MORDEE_CI&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } }
+  ];
+  return flexMenuSingle(title, buttons);
+}
+
+function mordeeCiOtherMenu() {
+  const title = 'MORDEE (CI) : อื่นๆ';
+  const buttons = [
+    { style: 'primary', action: { type: 'uri', label: 'เข้าระบบ OMS', uri: 'https://oms-vendor.web.app/' } },
+    { style: 'secondary', action: { type: 'postback', label: 'ที่อยู่ออกใบกำกับภาษี', data: 'project=MORDEE_CI&topic=taxaddr', displayText: 'ที่อยู่ออกใบกำกับภาษีหมอดี' } },
+    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าฉลากยา', data: 'project=MORDEE_CI&topic=label', displayText: 'ฉลากยาหมอดี' } },
+    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าโทรศัพท์ (Upload Evidences)', data: 'project=MORDEE_CI&topic=phone', displayText: 'ตั้งค่าโทรศัพท์หมอดี' } },
+    { style: 'secondary', action: { type: 'postback', label: 'LINE OA CI‑MORDEE', data: 'project=MORDEE_CI&topic=lineoa', displayText: 'LineOA CI-MORDEE' } },
+    { style: 'secondary', action: { type: 'postback', label: 'Dummy Code CI‑MORDEE', data: 'project=MORDEE_CI&topic=dummy', displayText: 'DummyCode CI-MORDEE' } }
+  ];
+  return flexMenuSingle(title, buttons);
+}
+
+// ---------- Reply helpers ----------
+function textMessage(text) {
+  return { type: 'text', text };
+}
+
+function resolveTextByPostback(project, topic) {
+  const p = (project || '').toUpperCase();
+  const t = (topic || '').toLowerCase();
+
+  if (t === 'helpdesk') return 'Help desk';
+  if (t === 'contact') return 'ติดต่อเจ้าหน้าที่';
+
+  if (p === 'PP' && t === 'druglist') return 'รายการยาโครงการPP';
+  if (p === 'CI' && t === 'dupbed') return 'แจ้งลบเตียงซ้ำ';
+  if ((p === 'CI' || p === 'PP') && t === 'hold') return 'แจ้งพักบริการ';
+
+  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'taxaddr') return 'ที่อยู่ออกใบกำกับภาษีหมอดี';
+  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'label') return 'ฉลากยาหมอดี';
+  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'phone') return 'ตั้งค่าโทรศัพท์หมอดี';
+  if (p === 'MORDEE_OPD' && t === 'lineoa') return 'LineOA MORDEE';
+  if (p === 'MORDEE_CI' && t === 'lineoa') return 'LineOA CI-MORDEE';
+  if (p === 'MORDEE_CI' && t === 'dummy') return 'DummyCode CI-MORDEE';
+  if (p === 'MODEL1' && t === 'linegroup') return 'ไลน์กลุ่ม Model1';
+
+  return null;
+}
+
+function buildMenuByProject(project, topic) {
+  const p = (project || '').toUpperCase();
+  const t = (topic || '').toLowerCase();
+
+  if (p === 'CI') {
+    if (t === 'other') return ciOtherMenu();
+    return ciMainMenu();
+  }
+  if (p === 'PP') {
+    if (t === 'other') return ppOtherMenu();
+    return ppMainMenu();
+  }
+  if (p === 'MODEL1') return model1MainMenu();
+  if (p === 'MORDEE_OPD') {
+    if (t === 'other') return mordeeOpdOtherMenu();
+    return mordeeOpdMainMenu();
+  }
+  if (p === 'MORDEE_CI') {
+    if (t === 'other') return mordeeCiOtherMenu();
+    return mordeeCiMainMenu();
+  }
+  return null;
+}
+
+// ---------- Handler ----------
+module.exports = async (req, res) => {
+  try {
+    // Debug: ตรวจ Node runtime บน Vercel
+    console.log(`[runtime] node=${process.version}`);
+
+    if (req.method !== 'POST') {
+      res.status(200).send('OK');
+      return;
+    }
+
+    const rawBody = await getRawBody(req);
+    const signature = req.headers['x-line-signature'];
+    const channelSecret = process.env.LINE_CHANNEL_SECRET;
+
+    if (!validateSignature(rawBody, signature, channelSecret)) {
+      res.status(403).send('Invalid signature');
+      return;
+    }
+
+    const body = JSON.parse(rawBody.toString('utf8'));
+    const events = body.events || [];
+
+    const results = await Promise.all(
+      events.map(async (event) => {
+        if (event.type === 'follow') {
+          return client.replyMessage(
+            event.replyToken,
+            textMessage('สวัสดีค่ะ พิมพ์ "เลือกโครงการที่ต้องการสอบถาม" เพื่อเริ่มต้นนะคะ')
+          );
+        }
+
+        if (event.type === 'message' && event.message?.type === 'text') {
+          const text = (event.message.text || '').trim();
+          if (text === 'เลือกโครงการที่ต้องการสอบถาม') {
+            return client.replyMessage(event.replyToken, flexProjectMenu());
+          }
+          return Promise.resolve();
+        }
+
+        if (event.type === 'postback') {
+          const data = event.postback?.data || '';
+          const params = {};
+          data.split('&').forEach((kv) => {
+            const [k, v] = kv.split('=');
+            if (k) params[k] = decodeURIComponent(v || '');
+          });
+
+          const project = params.project;
+          const topic = params.topic;
+
+          const textResp = resolveTextByPostback(project, topic);
+          if (textResp) return client.replyMessage(event.replyToken, textMessage(textResp));
+
+          const menu = buildMenuByProject(project, topic);
+          if (menu) return client.replyMessage(event.replyToken, menu);
+
+          return client.replyMessage(event.replyToken, textMessage('ขออภัย ไม่พบคำสั่งที่ต้องการค่ะ'));
+        }
+
+        return Promise.resolve();
+      })
+    );
+
+    res.status(200).json({ status: 'ok', results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Internal Error');
+  }
+};
