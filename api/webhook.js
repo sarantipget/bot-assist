@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const line = require('@line/bot-sdk');
 
 /**
- * ENV ต้องตั้งค่าใน Vercel
+ * ตั้งค่า ENV ใน Vercel:
  * - LINE_CHANNEL_SECRET
  * - LINE_CHANNEL_ACCESS_TOKEN
  */
@@ -15,9 +15,9 @@ const client = new line.Client({
 function getRawBody(req) {
   return new Promise((resolve, reject) => {
     try {
-      let data = [];
-      req.on('data', (chunk) => data.push(chunk));
-      req.on('end', () => resolve(Buffer.concat(data)));
+      const chunks = [];
+      req.on('data', (c) => chunks.push(c));
+      req.on('end', () => resolve(Buffer.concat(chunks)));
       req.on('error', reject);
     } catch (e) {
       reject(e);
@@ -251,17 +251,13 @@ function textMessage(text) {
   return { type: 'text', text };
 }
 
-// Map for text-only responses
 function resolveTextByPostback(project, topic) {
-  // Normalize
   const p = (project || '').toUpperCase();
   const t = (topic || '').toLowerCase();
 
-  // Common text responses
   if (t === 'helpdesk') return 'Help desk';
   if (t === 'contact') return 'ติดต่อเจ้าหน้าที่';
 
-  // Project-specific
   if (p === 'PP' && t === 'druglist') return 'รายการยาโครงการPP';
   if (p === 'CI' && t === 'dupbed') return 'แจ้งลบเตียงซ้ำ';
   if ((p === 'CI' || p === 'PP') && t === 'hold') return 'แจ้งพักบริการ';
@@ -275,7 +271,7 @@ function resolveTextByPostback(project, topic) {
 
   if (p === 'MODEL1' && t === 'linegroup') return 'ไลน์กลุ่ม Model1';
 
-  return null; // Unknown text
+  return null;
 }
 
 function buildMenuByProject(project, topic) {
@@ -324,53 +320,50 @@ module.exports = async (req, res) => {
     const body = JSON.parse(rawBody.toString('utf8'));
     const events = body.events || [];
 
-    const results = await Promise.all(events.map(async (event) => {
-      // FOLLOW event: แนะนำ trigger
-      if (event.type === 'follow') {
-        return client.replyMessage(event.replyToken, textMessage('สวัสดีค่ะ พิมพ์ "เลือกโครงการที่ต้องการสอบถาม" เพื่อเริ่มต้นนะคะ'));
-      }
-
-      // Message: trigger คีย์เวิร์ด
-      if (event.type === 'message' && event.message.type === 'text') {
-        const text = (event.message.text || '').trim();
-        if (text === 'เลือกโครงการที่ต้องการสอบถาม') {
-          return client.replyMessage(event.replyToken, flexProjectMenu());
+    const results = await Promise.all(
+      events.map(async (event) => {
+        if (event.type === 'follow') {
+          return client.replyMessage(
+            event.replyToken,
+            textMessage('สวัสดีค่ะ พิมพ์ "เลือกโครงการที่ต้องการสอบถาม" เพื่อเริ่มต้นนะคะ')
+          );
         }
-        // ไม่ตอบอย่างอื่น เพื่อให้ปรากฏเฉพาะตอนพิมพ์คำสั่ง
+
+        if (event.type === 'message' && event.message?.type === 'text') {
+          const text = (event.message.text || '').trim();
+          if (text === 'เลือกโครงการที่ต้องการสอบถาม') {
+            return client.replyMessage(event.replyToken, flexProjectMenu());
+          }
+          return Promise.resolve(); // เงียบ ถ้าไม่ใช่คีย์เวิร์ด
+        }
+
+        if (event.type === 'postback') {
+          const data = event.postback?.data || '';
+          const params = {};
+          data.split('&').forEach((kv) => {
+            const [k, v] = kv.split('=');
+            if (k) params[k] = decodeURIComponent(v || '');
+          });
+
+          const project = params.project;
+          const topic = params.topic;
+
+          const textResp = resolveTextByPostback(project, topic);
+          if (textResp) {
+            return client.replyMessage(event.replyToken, textMessage(textResp));
+          }
+
+          const menu = buildMenuByProject(project, topic);
+          if (menu) {
+            return client.replyMessage(event.replyToken, menu);
+          }
+
+          return client.replyMessage(event.replyToken, textMessage('ขออภัย ไม่พบคำสั่งที่ต้องการค่ะ'));
+        }
+
         return Promise.resolve();
-      }
-
-      // Postback: แสดงเมนูย่อย / ส่งข้อความ
-      if (event.type === 'postback') {
-        // postback data: project=CI&topic=other
-        const data = event.postback.data || '';
-        const params = {};
-        data.split('&').forEach((kv) => {
-          const [k, v] = kv.split('=');
-          if (k) params[k] = decodeURIComponent(v || '');
-        });
-
-        const project = params.project;
-        const topic = params.topic;
-
-        // 1) หากเป็น text-only
-        const textResp = resolveTextByPostback(project, topic);
-        if (textResp) {
-          return client.replyMessage(event.replyToken, textMessage(textResp));
-        }
-
-        // 2) หากเป็นเมนู (หลัก/อื่นๆ)
-        const menu = buildMenuByProject(project, topic);
-        if (menu) {
-          return client.replyMessage(event.replyToken, menu);
-        }
-
-        // 3) ถ้าไม่เข้าเงื่อนไข
-        return client.replyMessage(event.replyToken, textMessage('ขออภัย ไม่พบคำสั่งที่ต้องการค่ะ'));
-      }
-
-      return Promise.resolve();
-    }));
+      })
+    );
 
     res.status(200).json({ status: 'ok', results });
   } catch (err) {
