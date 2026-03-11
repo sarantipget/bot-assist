@@ -314,7 +314,7 @@ module.exports = async (req, res) => {
           if (text === 'เลือกโครงการที่ต้องการสอบถาม') {
             return client.replyMessage(event.replyToken, flexProjectMenu());
           }
-          return Promise.resolve(); // เงียบถ้าไม่ใช่คีย์เวิร์ด
+          return Promise.resolve();
         }
 
         if (event.type === 'postback') {
