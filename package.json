@@ -1,19 +1,19 @@
 {
-  "name": "line-oa-vercel-webhook-bot",
+  "name": "line-oa-webhook-flex-vercel",
   "version": "1.0.0",
-  "description": "LINE OA webhook bot (CI, PP, MORDEE OPD/CI) using Flex Messages on Vercel; message action for Auto Reply.",
+  "private": true,
+  "description": "LINE OA Webhook for project Q&A menus (Vercel + Flex Message)",
   "main": "api/webhook.js",
+  "type": "commonjs",
   "scripts": {
     "dev": "vercel dev",
-    "deploy": "vercel --prod"
+    "start": "vercel dev",
+    "test": "echo \"no tests\""
   },
   "dependencies": {
     "@line/bot-sdk": "^7.5.2"
   },
-  "devDependencies": {
-    "vercel": "^33.0.0"
-  },
   "engines": {
-    "node": "20.x"
+    "node": ">=18"
   }
 }
