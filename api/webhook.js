@@ -34,6 +34,20 @@ function validateSignature(rawBody, signature, channelSecret) {
 }
 
 /* ---------------------- Flex builders (generic) ---------------------- */
+function messageAction(label, text) {
+  // ใช้สำหรับปุ่มที่ต้อง "ส่งข้อความ" เพื่อชน Auto‑Reply ใน OA
+  return { type: 'message', label, text };
+}
+
+function postbackAction(label, data, displayText) {
+  // ใช้สำหรับเมนูนำทาง/เปิดเมนูย่อย
+  return { type: 'postback', label, data, displayText };
+}
+
+function uriAction(label, uri) {
+  return { type: 'uri', label, uri };
+}
+
 function menuBubble(title, buttons) {
   return {
     type: 'bubble',
@@ -61,49 +75,51 @@ function flexMenuSingle(title, buttons) {
   return { type: 'flex', altText: title, contents: menuBubble(title, buttons) };
 }
 
-/* ---------------------- เปลี่ยนเป็นแนวตั้งที่นี่! ---------------------- */
-/** เมนูเลือกโครงการ (แนวตั้งในบับเบิลเดียว) */
+/* ---------------------- หน้าเลือกโครงการ (แนวตั้ง) ---------------------- */
 function flexProjectMenu() {
   const title = 'เลือกโครงการที่ต้องการสอบถาม';
   const buttons = [
     {
       style: 'primary',
       color: '#2E86DE',
-      action: { type: 'postback', label: 'โครงการ CI', data: 'project=CI', displayText: 'โครงการ CI' },
+      action: postbackAction('โครงการ CI', 'project=CI', 'โครงการ CI'),
     },
     {
       style: 'primary',
       color: '#10AC84',
-      action: { type: 'postback', label: 'โครงการ PP', data: 'project=PP', displayText: 'โครงการ PP' },
+      action: postbackAction('โครงการ PP', 'project=PP', 'โครงการ PP'),
     },
     {
       style: 'primary',
       color: '#EE5253',
-      action: { type: 'postback', label: 'โครงการ Model1', data: 'project=MODEL1', displayText: 'โครงการ Model1' },
+      action: postbackAction('โครงการ Model1', 'project=MODEL1', 'โครงการ Model1'),
     },
     {
       style: 'primary',
       color: '#5F27CD',
-      action: { type: 'postback', label: 'โครงการ MORDEE (OPD)', data: 'project=MORDEE_OPD', displayText: 'โครงการ MORDEE (OPD)' },
+      action: postbackAction('โครงการ MORDEE (OPD)', 'project=MORDEE_OPD', 'โครงการ MORDEE (OPD)'),
     },
     {
       style: 'primary',
       color: '#FF9F43',
-      action: { type: 'postback', label: 'โครงการ MORDEE (CI)', data: 'project=MORDEE_CI', displayText: 'โครงการ MORDEE (CI)' },
+      action: postbackAction('โครงการ MORDEE (CI)', 'project=MORDEE_CI', 'โครงการ MORDEE (CI)'),
     },
   ];
   return flexMenuSingle(title, buttons);
 }
 
-/* ---------------------- Menus per project (คงเดิม) ---------------------- */
+/* ---------------------- เมนูตามโครงการ ---------------------- */
+// CI
 function ciMainMenu() {
   const title = 'โครงการ CI : เลือกหัวข้อ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F636e11b41bb819003368432f&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '2) รายการยา', uri: 'https://docs.google.com/spreadsheets/d/1Qt_04wW02HLSqOcQ_qe5wlyFeKTZEaGaa6q2CdPHpqc/edit?usp=sharing' } },
-    { style: 'secondary', action: { type: 'postback', label: '3) อื่นๆ', data: 'project=CI&topic=other', displayText: 'โครงการ CI : อื่นๆ' } },
-    { style: 'secondary', action: { type: 'postback', label: '4) แจ้งปัญหา Help Desk', data: 'project=CI&topic=helpdesk', displayText: 'Help desk' } },
-    { style: 'secondary', action: { type: 'postback', label: '5) ติดต่อทีมโครงการ', data: 'project=CI&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } },
+    { style: 'primary', action: uriAction('1) วิธีการทำงาน', 'https://cpall.ekoapp.com?redirect_path=sub%2F636e11b41bb819003368432f&eko_action=open_library') },
+    { style: 'primary', action: uriAction('2) รายการยา', 'https://docs.google.com/spreadsheets/d/1Qt_04wW02HLSqOcQ_qe5wlyFeKTZEaGaa6q2CdPHpqc/edit?usp=sharing') },
+    { style: 'secondary', action: postbackAction('3) อื่นๆ', 'project=CI&topic=other', 'โครงการ CI : อื่นๆ') },
+
+    // ต่อไปนี้ "ต้องขึ้นข้อความ" -> ใช้ type: message เพื่อชน Auto-Reply
+    { style: 'secondary', action: messageAction('4) แจ้งปัญหา Help Desk', 'Help desk') },
+    { style: 'secondary', action: messageAction('5) ติดต่อทีมโครงการ', 'ติดต่อเจ้าหน้าที่') },
   ];
   return flexMenuSingle(title, buttons);
 }
@@ -111,24 +127,31 @@ function ciMainMenu() {
 function ciOtherMenu() {
   const title = 'โครงการ CI : อื่นๆ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: 'A‑Med', uri: 'https://amed-care.hii.in.th' } },
-    { style: 'primary', action: { type: 'uri', label: 'New Authen', uri: 'https://authenservice.nhso.go.th/authencode' } },
-    { style: 'primary', action: { type: 'uri', label: 'แจ้งลูกค้ามีปัญหา', uri: 'https://forms.gle/b6LWSFiY7Jr6nrCc7' } },
-    { style: 'secondary', action: { type: 'postback', label: 'แจ้งลบเตียงซ้ำ', data: 'project=CI&topic=dupbed', displayText: 'แจ้งลบเตียงซ้ำ' } },
-    { style: 'secondary', action: { type: 'postback', label: 'แจ้งพักบริการ', data: 'project=CI&topic=hold', displayText: 'แจ้งพักบริการ' } },
-    { style: 'primary', action: { type: 'uri', label: 'Set รายการยา TA Booster', uri: 'https://docs.google.com/spreadsheets/d/1RoG9Pq2PpBWEfStZGCILjX3LBWwI-BIH/edit?usp=sharing&ouid=102635615160219209362&rtpof=true&sd=true' } },
+    { style: 'primary', action: uriAction('A‑Med', 'https://amed-care.hii.in.th') },
+    { style: 'primary', action: uriAction('New Authen', 'https://authenservice.nhso.go.th/authencode') },
+    { style: 'primary', action: uriAction('แจ้งลูกค้ามีปัญหา', 'https://forms.gle/b6LWSFiY7Jr6nrCc7') },
+
+    // ต้องขึ้นข้อความ -> ให้ OA ตอบตามคีย์เวิร์ด
+    { style: 'secondary', action: messageAction('แจ้งลบเตียงซ้ำ', 'แจ้งลบเตียงซ้ำ') },
+    { style: 'secondary', action: messageAction('แจ้งพักบริการ', 'แจ้งพักบริการ') },
+
+    { style: 'primary', action: uriAction('Set รายการยา TA Booster', 'https://docs.google.com/spreadsheets/d/1RoG9Pq2PpBWEfStZGCILjX3LBWwI-BIH/edit?usp=sharing&ouid=102635615160219209362&rtpof=true&sd=true') },
   ];
   return flexMenuSingle(title, buttons);
 }
 
+// PP
 function ppMainMenu() {
   const title = 'โครงการ PP : เลือกหัวข้อ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F617b6bdb733335002d570117&eko_action=open_library' } },
-    { style: 'secondary', action: { type: 'postback', label: '2) รายการยา', data: 'project=PP&topic=druglist', displayText: 'รายการยาโครงการPP' } },
-    { style: 'secondary', action: { type: 'postback', label: '3) อื่นๆ', data: 'project=PP&topic=other', displayText: 'โครงการ PP : อื่นๆ' } },
-    { style: 'secondary', action: { type: 'postback', label: '4) แจ้งปัญหา Help Desk', data: 'project=PP&topic=helpdesk', displayText: 'Help desk' } },
-    { style: 'secondary', action: { type: 'postback', label: '5) ติดต่อทีมโครงการ', data: 'project=PP&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } },
+    { style: 'primary', action: uriAction('1) วิธีการทำงาน', 'https://cpall.ekoapp.com?redirect_path=sub%2F617b6bdb733335002d570117&eko_action=open_library') },
+
+    // ต้องขึ้นข้อความ -> OA ตอบเอง
+    { style: 'secondary', action: messageAction('2) รายการยา', 'รายการยาโครงการPP') },
+
+    { style: 'secondary', action: postbackAction('3) อื่นๆ', 'project=PP&topic=other', 'โครงการ PP : อื่นๆ') },
+    { style: 'secondary', action: messageAction('4) แจ้งปัญหา Help Desk', 'Help desk') },
+    { style: 'secondary', action: messageAction('5) ติดต่อทีมโครงการ', 'ติดต่อเจ้าหน้าที่') },
   ];
   return flexMenuSingle(title, buttons);
 }
@@ -136,36 +159,44 @@ function ppMainMenu() {
 function ppOtherMenu() {
   const title = 'โครงการ PP : อื่นๆ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: 'Krungthai Digital Health Platform', uri: 'https://www.healthplatform.krungthai.com/healthPlatform/login' } },
-    { style: 'primary', action: { type: 'uri', label: 'New Authen', uri: 'https://authenservice.nhso.go.th/authencode' } },
-    { style: 'primary', action: { type: 'uri', label: 'แจ้งลูกค้ามีปัญหา', uri: 'https://forms.gle/b6LWSFiY7Jr6nrCc7' } },
-    { style: 'secondary', action: { type: 'postback', label: 'แจ้งพักบริการ', data: 'project=PP&topic=hold', displayText: 'แจ้งพักบริการ' } },
+    { style: 'primary', action: uriAction('Krungthai Digital Health Platform', 'https://www.healthplatform.krungthai.com/healthPlatform/login') },
+    { style: 'primary', action: uriAction('New Authen', 'https://authenservice.nhso.go.th/authencode') },
+    { style: 'primary', action: uriAction('แจ้งลูกค้ามีปัญหา', 'https://forms.gle/b6LWSFiY7Jr6nrCc7') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('แจ้งพักบริการ', 'แจ้งพักบริการ') },
   ];
   return flexMenuSingle(title, buttons);
 }
 
+// Model1
 function model1MainMenu() {
   const title = 'โครงการ Model1 : เลือกหัวข้อ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F617b6b712c5607002abf6ff4&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '2) New Authen', uri: 'https://authenservice.nhso.go.th/authencode' } },
-    { style: 'primary', action: { type: 'uri', label: '3) E-PRESCRIPT', uri: 'https://eprescript.nhso.go.th/eprescriptui/login' } },
-    { style: 'secondary', action: { type: 'postback', label: '4) ไลน์กลุ่ม eXta Plus', data: 'project=MODEL1&topic=linegroup', displayText: 'ไลน์กลุ่ม Model1' } },
-    { style: 'secondary', action: { type: 'postback', label: '5) แจ้งปัญหา Help Desk', data: 'project=MODEL1&topic=helpdesk', displayText: 'Help desk' } },
-    { style: 'secondary', action: { type: 'postback', label: '6) ติดต่อทีมโครงการ', data: 'project=MODEL1&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } },
+    { style: 'primary', action: uriAction('1) วิธีการทำงาน', 'https://cpall.ekoapp.com?redirect_path=sub%2F617b6b712c5607002abf6ff4&eko_action=open_library') },
+    { style: 'primary', action: uriAction('2) New Authen', 'https://authenservice.nhso.go.th/authencode') },
+    { style: 'primary', action: uriAction('3) E-PRESCRIPT', 'https://eprescript.nhso.go.th/eprescriptui/login') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('4) ไลน์กลุ่ม eXta Plus', 'ไลน์กลุ่ม Model1') },
+    { style: 'secondary', action: messageAction('5) แจ้งปัญหา Help Desk', 'Help desk') },
+    { style: 'secondary', action: messageAction('6) ติดต่อทีมโครงการ', 'ติดต่อเจ้าหน้าที่') },
   ];
   return flexMenuSingle(title, buttons);
 }
 
+// MORDEE (OPD)
 function mordeeOpdMainMenu() {
   const title = 'โครงการ MORDEE (OPD) : เลือกหัวข้อ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F67e115d4b3108d0021f43c99&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '2) รายการยา', uri: 'https://cpall.ekoapp.com?redirect_path=doc%2F686b31582f3e0033766d927f&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '3) Username/Password/PIN', uri: 'https://docs.google.com/spreadsheets/d/1K1pYCC80TF5oUd_JLmaTNfgjpcA28j9S6r6PqJ0hEmg/edit?gid=1247026841#gid=1247026841' } },
-    { style: 'secondary', action: { type: 'postback', label: '4) อื่นๆ', data: 'project=MORDEE_OPD&topic=other', displayText: 'MORDEE (OPD) : อื่นๆ' } },
-    { style: 'secondary', action: { type: 'postback', label: '5) แจ้งปัญหา Help Desk', data: 'project=MORDEE_OPD&topic=helpdesk', displayText: 'Help desk' } },
-    { style: 'secondary', action: { type: 'postback', label: '6) ติดต่อทีมโครงการ', data: 'project=MORDEE_OPD&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } },
+    { style: 'primary', action: uriAction('1) วิธีการทำงาน', 'https://cpall.ekoapp.com?redirect_path=sub%2F67e115d4b3108d0021f43c99&eko_action=open_library') },
+    { style: 'primary', action: uriAction('2) รายการยา', 'https://cpall.ekoapp.com?redirect_path=doc%2F686b31582f3e0033766d927f&eko_action=open_library') },
+    { style: 'primary', action: uriAction('3) Username/Password/PIN', 'https://docs.google.com/spreadsheets/d/1K1pYCC80TF5oUd_JLmaTNfgjpcA28j9S6r6PqJ0hEmg/edit?gid=1247026841#gid=1247026841') },
+    { style: 'secondary', action: postbackAction('4) อื่นๆ', 'project=MORDEE_OPD&topic=other', 'MORDEE (OPD) : อื่นๆ') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('5) แจ้งปัญหา Help Desk', 'Help desk') },
+    { style: 'secondary', action: messageAction('6) ติดต่อทีมโครงการ', 'ติดต่อเจ้าหน้าที่') },
   ];
   return flexMenuSingle(title, buttons);
 }
@@ -173,24 +204,29 @@ function mordeeOpdMainMenu() {
 function mordeeOpdOtherMenu() {
   const title = 'MORDEE (OPD) : อื่นๆ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: 'เข้าระบบ OMS', uri: 'https://oms-vendor.web.app/' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ที่อยู่ออกใบกำกับภาษี', data: 'project=MORDEE_OPD&topic=taxaddr', displayText: 'ที่อยู่ออกใบกำกับภาษีหมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าฉลากยา', data: 'project=MORDEE_OPD&topic=label', displayText: 'ฉลากยาหมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าโทรศัพท์ (Upload Evidences)', data: 'project=MORDEE_OPD&topic=phone', displayText: 'ตั้งค่าโทรศัพท์หมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'LINE OA MORDEE', data: 'project=MORDEE_OPD&topic=lineoa', displayText: 'LineOA MORDEE' } },
+    { style: 'primary', action: uriAction('เข้าระบบ OMS', 'https://oms-vendor.web.app/') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('ที่อยู่ออกใบกำกับภาษี', 'ที่อยู่ออกใบกำกับภาษีหมอดี') },
+    { style: 'secondary', action: messageAction('ตั้งค่าฉลากยา', 'ฉลากยาหมอดี') },
+    { style: 'secondary', action: messageAction('ตั้งค่าโทรศัพท์ (Upload Evidences)', 'ตั้งค่าโทรศัพท์หมอดี') },
+    { style: 'secondary', action: messageAction('LINE OA MORDEE', 'LineOA MORDEE') },
   ];
   return flexMenuSingle(title, buttons);
 }
 
+// MORDEE (CI)
 function mordeeCiMainMenu() {
   const title = 'โครงการ MORDEE (CI) : เลือกหัวข้อ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: '1) วิธีการทำงาน', uri: 'https://cpall.ekoapp.com?redirect_path=sub%2F6901c8d17cc77280e8f45e5f&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '2) รายการยา', uri: 'https://cpall.ekoapp.com?redirect_path=doc%2F6901cb837cc77251f0f46a55&eko_action=open_library' } },
-    { style: 'primary', action: { type: 'uri', label: '3) Username/Password/PIN', uri: 'https://docs.google.com/spreadsheets/d/1K1pYCC80TF5oUd_JLmaTNfgjpcA28j9S6r6PqJ0hEmg/edit?gid=1247026841#gid=1247026841' } },
-    { style: 'secondary', action: { type: 'postback', label: '4) อื่นๆ', data: 'project=MORDEE_CI&topic=other', displayText: 'MORDEE (CI) : อื่นๆ' } },
-    { style: 'secondary', action: { type: 'postback', label: '5) แจ้งปัญหา Help Desk', data: 'project=MORDEE_CI&topic=helpdesk', displayText: 'Help desk' } },
-    { style: 'secondary', action: { type: 'postback', label: '6) ติดต่อทีมโครงการ', data: 'project=MORDEE_CI&topic=contact', displayText: 'ติดต่อเจ้าหน้าที่' } },
+    { style: 'primary', action: uriAction('1) วิธีการทำงาน', 'https://cpall.ekoapp.com?redirect_path=sub%2F6901c8d17cc77280e8f45e5f&eko_action=open_library') },
+    { style: 'primary', action: uriAction('2) รายการยา', 'https://cpall.ekoapp.com?redirect_path=doc%2F6901cb837cc77251f0f46a55&eko_action=open_library') },
+    { style: 'primary', action: uriAction('3) Username/Password/PIN', 'https://docs.google.com/spreadsheets/d/1K1pYCC80TF5oUd_JLmaTNfgjpcA28j9S6r6PqJ0hEmg/edit?gid=1247026841#gid=1247026841') },
+    { style: 'secondary', action: postbackAction('4) อื่นๆ', 'project=MORDEE_CI&topic=other', 'MORDEE (CI) : อื่นๆ') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('5) แจ้งปัญหา Help Desk', 'Help desk') },
+    { style: 'secondary', action: messageAction('6) ติดต่อทีมโครงการ', 'ติดต่อเจ้าหน้าที่') },
   ];
   return flexMenuSingle(title, buttons);
 }
@@ -198,43 +234,24 @@ function mordeeCiMainMenu() {
 function mordeeCiOtherMenu() {
   const title = 'MORDEE (CI) : อื่นๆ';
   const buttons = [
-    { style: 'primary', action: { type: 'uri', label: 'เข้าระบบ OMS', uri: 'https://oms-vendor.web.app/' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ที่อยู่ออกใบกำกับภาษี', data: 'project=MORDEE_CI&topic=taxaddr', displayText: 'ที่อยู่ออกใบกำกับภาษีหมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าฉลากยา', data: 'project=MORDEE_CI&topic=label', displayText: 'ฉลากยาหมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'ตั้งค่าโทรศัพท์ (Upload Evidences)', data: 'project=MORDEE_CI&topic=phone', displayText: 'ตั้งค่าโทรศัพท์หมอดี' } },
-    { style: 'secondary', action: { type: 'postback', label: 'LINE OA CI‑MORDEE', data: 'project=MORDEE_CI&topic=lineoa', displayText: 'LineOA CI-MORDEE' } },
-    { style: 'secondary', action: { type: 'postback', label: 'Dummy Code CI‑MORDEE', data: 'project=MORDEE_CI&topic=dummy', displayText: 'DummyCode CI-MORDEE' } },
+    { style: 'primary', action: uriAction('เข้าระบบ OMS', 'https://oms-vendor.web.app/') },
+
+    // ต้องขึ้นข้อความ
+    { style: 'secondary', action: messageAction('ที่อยู่ออกใบกำกับภาษี', 'ที่อยู่ออกใบกำกับภาษีหมอดี') },
+    { style: 'secondary', action: messageAction('ตั้งค่าฉลากยา', 'ฉลากยาหมอดี') },
+    { style: 'secondary', action: messageAction('ตั้งค่าโทรศัพท์ (Upload Evidences)', 'ตั้งค่าโทรศัพท์หมอดี') },
+    { style: 'secondary', action: messageAction('LINE OA CI‑MORDEE', 'LineOA CI-MORDEE') },
+    { style: 'secondary', action: messageAction('Dummy Code CI‑MORDEE', 'DummyCode CI-MORDEE') },
   ];
   return flexMenuSingle(title, buttons);
 }
 
-/* ---------------------- Reply helpers ---------------------- */
+/* ---------------------- ตัวช่วยตอบกลับ ---------------------- */
 function textMessage(text) {
   return { type: 'text', text };
 }
 
-function resolveTextByPostback(project, topic) {
-  const p = (project || '').toUpperCase();
-  const t = (topic || '').toLowerCase();
-
-  if (t === 'helpdesk') return 'Help desk';
-  if (t === 'contact') return 'ติดต่อเจ้าหน้าที่';
-
-  if (p === 'PP' && t === 'druglist') return 'รายการยาโครงการPP';
-  if (p === 'CI' && t === 'dupbed') return 'แจ้งลบเตียงซ้ำ';
-  if ((p === 'CI' || p === 'PP') && t === 'hold') return 'แจ้งพักบริการ';
-
-  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'taxaddr') return 'ที่อยู่ออกใบกำกับภาษีหมอดี';
-  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'label') return 'ฉลากยาหมอดี';
-  if ((p === 'MORDEE_OPD' || p === 'MORDEE_CI') && t === 'phone') return 'ตั้งค่าโทรศัพท์หมอดี';
-  if (p === 'MORDEE_OPD' && t === 'lineoa') return 'LineOA MORDEE';
-  if (p === 'MORDEE_CI' && t === 'lineoa') return 'LineOA CI-MORDEE';
-  if (p === 'MORDEE_CI' && t === 'dummy') return 'DummyCode CI-MORDEE';
-  if (p === 'MODEL1' && t === 'linegroup') return 'ไลน์กลุ่ม Model1';
-
-  return null;
-}
-
+// เหลือเฉพาะ postback ที่เป็น "นำทางเมนู" เท่านั้น
 function buildMenuByProject(project, topic) {
   const p = (project || '').toUpperCase();
   const t = (topic || '').toLowerCase();
@@ -295,6 +312,7 @@ module.exports = async (req, res) => {
           if (text === 'เลือกโครงการที่ต้องการสอบถาม') {
             return client.replyMessage(event.replyToken, flexProjectMenu());
           }
+          // อื่น ๆ เงียบไว้ เพื่อให้บอทแสดงเมนูเฉพาะคำสั่ง
           return Promise.resolve();
         }
 
@@ -309,12 +327,13 @@ module.exports = async (req, res) => {
           const project = params.project;
           const topic = params.topic;
 
-          const textResp = resolveTextByPostback(project, topic);
-          if (textResp) return client.replyMessage(event.replyToken, textMessage(textResp));
-
+          // postback ใช้เฉพาะแสดงเมนูย่อย
           const menu = buildMenuByProject(project, topic);
-          if (menu) return client.replyMessage(event.replyToken, menu);
+          if (menu) {
+            return client.replyMessage(event.replyToken, menu);
+          }
 
+          // ถ้า postback ไม่ตรงเงื่อนไข ให้บอกผู้ใช้
           return client.replyMessage(event.replyToken, textMessage('ขออภัย ไม่พบคำสั่งที่ต้องการค่ะ'));
         }
 
