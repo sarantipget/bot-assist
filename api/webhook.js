@@ -3,7 +3,7 @@ const crypto = require('crypto');
 const line = require('@line/bot-sdk');
 
 /**
- * ต้องตั้งค่า ENV บน Vercel:
+ * ENV on Vercel:
  * - LINE_CHANNEL_SECRET
  * - LINE_CHANNEL_ACCESS_TOKEN
  */
@@ -33,60 +33,7 @@ function validateSignature(rawBody, signature, channelSecret) {
   return signature === digest;
 }
 
-// ---------- Flex builders ----------
-function flexProjectMenu() {
-  return {
-    type: 'flex',
-    altText: 'เลือกโครงการที่ต้องการสอบถาม',
-    contents: {
-      type: 'carousel',
-      contents: [
-        projectBubble('โครงการ CI', 'CI', '#2E86DE'),
-        projectBubble('โครงการ PP', 'PP', '#10AC84'),
-        projectBubble('โครงการ Model1', 'MODEL1', '#EE5253'),
-        projectBubble('โครงการ MORDEE (OPD)', 'MORDEE_OPD', '#5F27CD'),
-        projectBubble('โครงการ MORDEE (CI)', 'MORDEE_CI', '#FF9F43'),
-      ],
-    },
-  };
-}
-
-function projectBubble(title, key, color = '#2E86DE') {
-  return {
-    type: 'bubble',
-    size: 'mega',
-    body: {
-      type: 'box',
-      layout: 'vertical',
-      spacing: 'lg',
-      contents: [
-        { type: 'text', text: title, weight: 'bold', size: 'xl', wrap: true },
-        { type: 'separator', margin: 'md' },
-        {
-          type: 'box',
-          layout: 'vertical',
-          spacing: 'sm',
-          margin: 'md',
-          contents: [
-            {
-              type: 'button',
-              style: 'primary',
-              color,
-              height: 'md',
-              action: {
-                type: 'postback',
-                label: 'เลือกหัวข้อ',
-                data: `project=${key}`,
-                displayText: title,
-              },
-            },
-          ],
-        },
-      ],
-    },
-  };
-}
-
+/* ---------------------- Flex builders (generic) ---------------------- */
 function menuBubble(title, buttons) {
   return {
     type: 'bubble',
@@ -114,7 +61,41 @@ function flexMenuSingle(title, buttons) {
   return { type: 'flex', altText: title, contents: menuBubble(title, buttons) };
 }
 
-// ---------- Menus per project ----------
+/* ---------------------- เปลี่ยนเป็นแนวตั้งที่นี่! ---------------------- */
+/** เมนูเลือกโครงการ (แนวตั้งในบับเบิลเดียว) */
+function flexProjectMenu() {
+  const title = 'เลือกโครงการที่ต้องการสอบถาม';
+  const buttons = [
+    {
+      style: 'primary',
+      color: '#2E86DE',
+      action: { type: 'postback', label: 'โครงการ CI', data: 'project=CI', displayText: 'โครงการ CI' },
+    },
+    {
+      style: 'primary',
+      color: '#10AC84',
+      action: { type: 'postback', label: 'โครงการ PP', data: 'project=PP', displayText: 'โครงการ PP' },
+    },
+    {
+      style: 'primary',
+      color: '#EE5253',
+      action: { type: 'postback', label: 'โครงการ Model1', data: 'project=MODEL1', displayText: 'โครงการ Model1' },
+    },
+    {
+      style: 'primary',
+      color: '#5F27CD',
+      action: { type: 'postback', label: 'โครงการ MORDEE (OPD)', data: 'project=MORDEE_OPD', displayText: 'โครงการ MORDEE (OPD)' },
+    },
+    {
+      style: 'primary',
+      color: '#FF9F43',
+      action: { type: 'postback', label: 'โครงการ MORDEE (CI)', data: 'project=MORDEE_CI', displayText: 'โครงการ MORDEE (CI)' },
+    },
+  ];
+  return flexMenuSingle(title, buttons);
+}
+
+/* ---------------------- Menus per project (คงเดิม) ---------------------- */
 function ciMainMenu() {
   const title = 'โครงการ CI : เลือกหัวข้อ';
   const buttons = [
@@ -227,7 +208,7 @@ function mordeeCiOtherMenu() {
   return flexMenuSingle(title, buttons);
 }
 
-// ---------- Reply helpers ----------
+/* ---------------------- Reply helpers ---------------------- */
 function textMessage(text) {
   return { type: 'text', text };
 }
@@ -278,7 +259,7 @@ function buildMenuByProject(project, topic) {
   return null;
 }
 
-// ---------- Handler ----------
+/* ---------------------- Handler ---------------------- */
 module.exports = async (req, res) => {
   try {
     console.log(`[runtime] node=${process.version}`);
